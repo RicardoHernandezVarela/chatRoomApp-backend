@@ -10,8 +10,10 @@ const PORT = process.env.PORT || 5000;
 
 const { addUserToChat, removeUserFromChat, getUser } = require('./helpers');
 const db = require('./dbkey');
+
+/* MODELS */
 const Room = require('./models/Rooms');
-const { response } = require('express');
+const Message = require('./models/Message');
 
 // Mongoose conf
 mongoose.set('useFindAndModify', false);
@@ -63,6 +65,14 @@ io.on('connection', (socket) => {
     } else {
       console.log('User joined to chat: ', user);
       socket.join(room_id);
+
+      // FIND ALL MESSAGES IN THE CHATROOM
+      Message.find({room_id: room_id})
+        .then(response => {
+          io.emit('all-chatroom-messages', response);
+          console.log('all messages: ', response);
+        })
+        .catch(error => console.log(error));
     }
   });
 
@@ -77,8 +87,15 @@ io.on('connection', (socket) => {
         room_id,
         text: message
       };
-      console.log('message: ', msgToStore);
-      io.to(room_id).emit('new-message', msgToStore);
+
+      // SAVE NEW MESSAGE
+      const newMessage = new Message(msgToStore);
+      newMessage.save()
+        .then(response => {
+          console.log('message: ', response);
+          io.to(room_id).emit('new-message', response);
+        })
+        .catch(error => console.log(error));
     } else {
       console.log('no user connected!');
     }
