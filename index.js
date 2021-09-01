@@ -15,10 +15,10 @@ const db = require('./dbkey');
 const Room = require('./models/Rooms');
 const Message = require('./models/Message');
 
-// Mongoose conf
+// MONGOOSE CONF
 mongoose.set('useFindAndModify', false);
 
-// mongodb connection
+// MONGODB CONNECTION
 mongoose.connect(db, {useNewUrlParser: true, useUnifiedTopology: true})
     .then(() => {
         console.log('connected to the db ✌');
@@ -30,18 +30,23 @@ mongoose.connect(db, {useNewUrlParser: true, useUnifiedTopology: true})
         console.log(err);
     });
 
+// HOME ROUTE
 app.get('/', (req, res) => {
   res.send('Hemllo');
 });
 
+// SOCKET / USER CONNECTION
 io.on('connection', (socket) => {
   console.log('a user connected: ', socket.id);
+
+  // GET ALL CHATROOMS WHEN USER IS CONNECTED ANT RETURN THEM TO THE CLIENT
   Room.find()
     .then(response => {
       io.emit('all-chatrooms', response);
     })
     .catch(error => console.log(error));
-
+  
+  // EVENT FIRED WHEN USER CREATES A NEW CHATROOM / SAVE NEW CHATROOM TO THE DB
   socket.on('create-room', (room) => {
     const newRoom = new Room({name: room.name});
     newRoom.save()
@@ -52,6 +57,7 @@ io.on('connection', (socket) => {
       .catch(error => console.log(error));
   });
 
+  // EVENT FIRED WHEN USER JOINS TO A CHATROOM
   socket.on('join-user-to-chat', ({name, room_id, user_id}) => {
     const {user, error} = addUserToChat(
       socket.id,
@@ -66,18 +72,19 @@ io.on('connection', (socket) => {
       console.log('User joined to chat: ', user);
       socket.join(room_id);
 
-      // FIND ALL MESSAGES IN THE CHATROOM
+      // FIND ALL MESSAGES IN THE CHATROOM AND RETURN THEM TO THE CLIENT
       Message.find({room_id: room_id})
         .then(response => {
           io.emit('all-chatroom-messages', response);
-          console.log('all messages: ', response);
+          console.log('all messages: ', response.length);
         })
         .catch(error => console.log(error));
     }
   });
 
+  // EVENT FIRED WHEN USER SENDS A MESSAGE
   socket.on('message-sent', ({room_id, message}) => {
-    const user = getUser(socket.id);
+    const user = getUser(socket.id); // GET USER INFO
 
     if (user) {
       console.log('message-sent', user);
@@ -88,11 +95,13 @@ io.on('connection', (socket) => {
         text: message
       };
 
-      // SAVE NEW MESSAGE
+      // SAVE NEW MESSAGE TO THE DB
       const newMessage = new Message(msgToStore);
       newMessage.save()
         .then(response => {
           console.log('message: ', response);
+
+          // RETURN NEW MESSAGE TO THE CHATROOM / ALL CLIENTS FROM CHATROOM
           io.to(room_id).emit('new-message', response);
         })
         .catch(error => console.log(error));
@@ -101,7 +110,9 @@ io.on('connection', (socket) => {
     }
   });
 
+  // EVENT FIRED WHEN USER DISCONNECTS
   socket.on('disconnect', () => {
-    // const user = removeUserFromChat(socket.id);
+    const user = removeUserFromChat(socket.id);
+    console.log('user disconnected: ', user.socket_id);
   });
 });
