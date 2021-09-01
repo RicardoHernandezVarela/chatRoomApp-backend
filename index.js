@@ -8,8 +8,14 @@ const socketio = require('socket.io');
 const io = socketio(server, {});
 const PORT = process.env.PORT || 5000;
 
+// EXPRESS MIDDLEWARE
+app.use(express.json());
+
 const { addUserToChat, removeUserFromChat, getUser } = require('./helpers');
 const db = require('./dbkey');
+
+// AUTH ROUTER
+const authRouter = require('./routes/auth');
 
 /* MODELS */
 const Room = require('./models/Rooms');
@@ -34,6 +40,9 @@ mongoose.connect(db, {useNewUrlParser: true, useUnifiedTopology: true})
 app.get('/', (req, res) => {
   res.send('Hemllo');
 });
+
+// AUTH ROUTES
+app.use(authRouter);
 
 // SOCKET / USER CONNECTION
 io.on('connection', (socket) => {
@@ -113,6 +122,6 @@ io.on('connection', (socket) => {
   // EVENT FIRED WHEN USER DISCONNECTS
   socket.on('disconnect', () => {
     const user = removeUserFromChat(socket.id);
-    console.log('user disconnected: ', user.socket_id);
+    //console.log('user disconnected: ', user.socket_id);
   });
 });
