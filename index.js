@@ -3,6 +3,7 @@ const app = express();
 const http = require('http');
 const server = http.createServer(app);
 const mongoose = require('mongoose');
+const cookieParser = require('cookie-parser');
 
 const socketio = require('socket.io');
 const io = socketio(server, {});
@@ -10,6 +11,7 @@ const PORT = process.env.PORT || 5000;
 
 // EXPRESS MIDDLEWARE
 app.use(express.json());
+app.use(cookieParser());
 
 const { addUserToChat, removeUserFromChat, getUser } = require('./helpers');
 const db = require('./dbkey');
@@ -43,6 +45,18 @@ app.get('/', (req, res) => {
 
 // AUTH ROUTES
 app.use(authRouter);
+
+// USING COOKIES TEST
+app.get('/set-cookies', (req, res) => {
+  res.cookie('username', 'rick');
+  res.cookie('isAuthenticated', true, { httpOnly: true });
+  res.status(200).send('Cookies were set');
+});
+
+app.get('/get-cookies', (req, res) => {
+  const cookies = req.cookies;
+  res.status(200).json(cookies);
+});
 
 // SOCKET / USER CONNECTION
 io.on('connection', (socket) => {
