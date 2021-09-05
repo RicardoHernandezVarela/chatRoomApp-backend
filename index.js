@@ -4,12 +4,21 @@ const http = require('http');
 const server = http.createServer(app);
 const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
+const cors = require('cors');
 
 const socketio = require('socket.io');
 const io = socketio(server, {});
 const PORT = process.env.PORT || 5000;
 
+// CORS OPTIONS
+const corsOptions = {
+  origin: 'http://localhost:3000/',
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
 // EXPRESS MIDDLEWARE
+app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 

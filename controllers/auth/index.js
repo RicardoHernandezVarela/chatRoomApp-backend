@@ -25,7 +25,8 @@ const signup = async (req, res) => {
 
   try {
     const user = await User.create({ name, email, password });
-    res.status(201).json(user);
+    const response = {_id: user._id, name: user.name, email: user.email};
+    res.status(201).json(response);
   } catch(error) {
     const errors = checkErrorCreatingAccount(error);
     res.status(400).json(errors);
