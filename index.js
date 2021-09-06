@@ -12,13 +12,13 @@ const PORT = process.env.PORT || 5000;
 
 // CORS OPTIONS
 const corsOptions = {
-  origin: 'http://localhost:3000/',
+  origin: true,
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
 };
 
 // EXPRESS MIDDLEWARE
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 

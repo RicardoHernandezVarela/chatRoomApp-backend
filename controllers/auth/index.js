@@ -1,5 +1,17 @@
-// USE MODEL
+// USER MODEL
 const User = require('../../models/User');
+const jwt = require('jsonwebtoken');
+
+const maxTokenDuration = 5 * 24 * 60 * 60;
+
+// CREATE JWT
+const createJWT = (id) => {
+  const token = jwt.sign({id}, 'chatroom secret', {
+    expiresIn: maxTokenDuration,
+  });
+
+  return token;
+};
 
 // CHECK ERRORS CREATING USER / ACCOUNT / SIGNUP
 const checkErrorCreatingAccount = (error) => {
@@ -27,6 +39,11 @@ const signup = async (req, res) => {
   try {
     const user = await User.create({ name, email, password });
     const userResponse = {_id: user._id, name: user.name, email: user.email};
+
+    // CREATE JWT WITH THE USER ID
+    const token = createJWT(user._id);
+    res.cookie('jwt', token, { httpOnly: true, maxAge: maxTokenDuration * 1000 });
+
     response.user = userResponse;
     res.status(201).json(response);
 
@@ -39,6 +56,7 @@ const signup = async (req, res) => {
 
 // LOGIN CONTROLLER
 const login = async (req, res) => {
+  //console.log('REQ: ', req.headers.origin);
   const { email, password } = req.body;
   const response = {user: null, errors: null};
   const errors = {email: '', password: ''};
@@ -46,6 +64,11 @@ const login = async (req, res) => {
   try {
     const user = await User.login(email, password);
     const userResponse = {_id: user._id, name: user.name, email: user.email};
+
+    // CREATE JWT WITH THE USER ID
+    const token = createJWT(user._id);
+    res.cookie('jwt', token, { httpOnly: true, maxAge: maxTokenDuration * 1000 });
+
     response.user = userResponse;
     res.status(201).json(response);
 
