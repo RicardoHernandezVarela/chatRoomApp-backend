@@ -31,6 +31,31 @@ userSchema.pre('save', async function(next) {
   next();
 });
 
+// ADD LOGIN FUNTION TO USER SCHEMA
+userSchema.statics.login = async function(email, password) {
+  const user = await this.findOne({ email }); // FIND USER BY EMAIL
+  const error = {message: '', path: ''}; // CUSTOM ERROR
+
+  if (user) {
+    const isAuthenticated = await bcrypt.compare(password, user.password);
+
+    if (isAuthenticated) {
+      return user;
+    } else {
+      error.path = 'password';
+      error.message = 'Wrong password';
+
+      throw error;
+    }
+
+  } else {
+    error.path = 'email';
+    error.message = 'This email is not registered';
+
+    throw error;
+  }
+};
+
 const User = new model('user', userSchema);
 
 module.exports = User;

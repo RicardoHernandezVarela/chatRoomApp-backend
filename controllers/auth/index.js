@@ -1,7 +1,7 @@
 // USE MODEL
 const User = require('../../models/User');
 
-// CHECK ERROR CREATING USER / ACCOUNT / SIGNUP
+// CHECK ERRORS CREATING USER / ACCOUNT / SIGNUP
 const checkErrorCreatingAccount = (error) => {
   const errors = {name: '', email: '', password: ''};
 
@@ -38,9 +38,23 @@ const signup = async (req, res) => {
 };
 
 // LOGIN CONTROLLER
-const login = (req, res) => {
-  const userData = req.body;
-  res.status(200).send(userData);
+const login = async (req, res) => {
+  const { email, password } = req.body;
+  const response = {user: null, errors: null};
+  const errors = {email: '', password: ''};
+
+  try {
+    const user = await User.login(email, password);
+    const userResponse = {_id: user._id, name: user.name, email: user.email};
+    response.user = userResponse;
+    res.status(201).json(response);
+
+  } catch(error) {
+    errors[error.path] = error.message;
+
+    response.errors = errors;
+    res.status(400).json(response);
+  }
 };
 
 // LOGOUT CONTROLLER
