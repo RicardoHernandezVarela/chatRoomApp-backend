@@ -22,14 +22,18 @@ const checkErrorCreatingAccount = (error) => {
 // SIGNUP CONTROLLER
 const signup = async (req, res) => {
   const { name, email, password } = req.body;
+  const response = {user: null, errors: null};
 
   try {
     const user = await User.create({ name, email, password });
-    const response = {_id: user._id, name: user.name, email: user.email};
+    const userResponse = {_id: user._id, name: user.name, email: user.email};
+    response.user = userResponse;
     res.status(201).json(response);
+
   } catch(error) {
     const errors = checkErrorCreatingAccount(error);
-    res.status(400).json(errors);
+    response.errors = errors;
+    res.status(400).json(response);
   }
 };
 
