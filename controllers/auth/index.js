@@ -80,9 +80,37 @@ const login = async (req, res) => {
   }
 };
 
+// VERIFY LOGED IN USER
+const verifyUser = async (req, res, next) => {
+  const token = req.cookies.jwt;
+
+  if (token) {
+    // VERIFY USER
+    jwt.verify(token, 'chatroom secret', async (error, decodedToken) => {
+      //console.log(decodedToken, error);
+      const response = {user: null, error: null}
+
+      if (!error) {
+        const user = await User.findById(decodedToken.id);
+        const userResponse = {_id: user._id, name: user.name, email: user.email};
+        
+        response.user = userResponse;
+        res.status(200).json(response);
+        next();
+
+      } else {
+        console.log('ERROR VERIFYING TOKEN: ', error);
+      }
+    });
+
+  } else {
+    next();
+  }
+};
+
 // LOGOUT CONTROLLER
 const logout = (req, res) => {
   res.send('this is the logout');
 };
 
-module.exports = { signup, login, logout };
+module.exports = { signup, login, verifyUser, logout };
