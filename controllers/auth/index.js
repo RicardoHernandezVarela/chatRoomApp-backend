@@ -83,12 +83,12 @@ const login = async (req, res) => {
 // VERIFY LOGED IN USER
 const verifyUser = async (req, res, next) => {
   const token = req.cookies.jwt;
+  const response = {user: null, error: null};
 
   if (token) {
     // VERIFY USER
     jwt.verify(token, 'chatroom secret', async (error, decodedToken) => {
       //console.log(decodedToken, error);
-      const response = {user: null, error: null}
 
       if (!error) {
         const user = await User.findById(decodedToken.id);
@@ -100,17 +100,23 @@ const verifyUser = async (req, res, next) => {
 
       } else {
         console.log('ERROR VERIFYING TOKEN: ', error);
+        response.error = {message: 'ERROR VERIFYING TOKEN'};
+        res.status(400).json(response);
       }
     });
 
   } else {
+    console.log('NO TOKEN', token);
+    response.error = {message: 'NO TOKEN FOUND'};
+    res.status(400).json(response);
     next();
   }
 };
 
 // LOGOUT CONTROLLER
 const logout = (req, res) => {
-  res.send('this is the logout');
+  res.cookie('jwt', '', { maxAge: 1 });
+  res.status(200).json({logout: true});
 };
 
 module.exports = { signup, login, verifyUser, logout };
